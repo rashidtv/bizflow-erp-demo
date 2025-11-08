@@ -230,7 +230,17 @@ export default {
     )
   })
 
+  // Client-side keep-alive every 2 minutes
+  setInterval(() => {
+    fetch('https://bizflow-erp-backend.onrender.com/api/ping')
+      .then(() => console.log('Client ping successful'))
+      .catch(() => console.log('Client ping failed (cold start)'));
+  }, 2 * 60 * 1000); // Every 2 minutes
 
+  // Also ping immediately when app loads
+  fetch('https://bizflow-erp-backend.onrender.com/api/ping')
+    .then(() => console.log('Initial ping successful'))
+    .catch(() => console.log('Initial ping failed'));
   
     // Test API connection on app start
     api.get('/health')
