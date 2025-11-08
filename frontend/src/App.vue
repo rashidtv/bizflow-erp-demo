@@ -230,6 +230,8 @@ export default {
     )
   })
 
+
+  
     // Test API connection on app start
     api.get('/health')
       .then(response => {

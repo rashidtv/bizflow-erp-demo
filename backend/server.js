@@ -160,6 +160,82 @@ app.get('/api/health', (req, res) => {
   res.status(200).json(healthCheck);
 });
 
+// ==============================================
+// KEEP-ALIVE ENDPOINTS FOR MULTI-MONITORING
+// ==============================================
+
+// Ultra-fast ping endpoints (minimal response)
+app.get('/api/ping', (req, res) => {
+  res.status(200).json({ 
+    status: 'pong', 
+    t: Date.now(),
+    msg: 'Ultra fast ping'
+  });
+});
+
+app.get('/api/health1', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    endpoint: 'health1', 
+    t: Date.now(),
+    msg: 'UptimeRobot Primary'
+  });
+});
+
+app.get('/api/health2', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    endpoint: 'health2', 
+    t: Date.now(),
+    msg: 'FreshPing Monitor'
+  });
+});
+
+app.get('/api/health3', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    endpoint: 'health3', 
+    t: Date.now(),
+    msg: 'HetrixTools Monitor'
+  });
+});
+
+app.get('/api/keepalive1', (req, res) => {
+  res.status(200).json({ 
+    status: 'alive', 
+    endpoint: 'keepalive1', 
+    t: Date.now(),
+    msg: 'Keep Alive 1'
+  });
+});
+
+app.get('/api/keepalive2', (req, res) => {
+  res.status(200).json({ 
+    status: 'alive', 
+    endpoint: 'keepalive2', 
+    t: Date.now(),
+    msg: 'Keep Alive 2'
+  });
+});
+
+app.get('/api/keepalive3', (req, res) => {
+  res.status(200).json({ 
+    status: 'alive', 
+    endpoint: 'keepalive3', 
+    t: Date.now(),
+    msg: 'Keep Alive 3'
+  });
+});
+
+// Quick warmup endpoint
+app.get('/api/quick-warm', (req, res) => {
+  res.status(200).json({ 
+    status: 'warmed', 
+    t: Date.now(),
+    msg: 'Quick warmup complete'
+  });
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/tenants', tenantRoutes);
