@@ -1,33 +1,31 @@
 # BizFlow ERP Demo
 
-A modern ERP system for Malaysian SMEs featuring accounting, payroll, compliance, and inventory management.
+A modern ERP system for Malaysian SMEs featuring accounting, payroll, SST compliance, and inventory management.
 
-## Features
+## 🚀 Features
 
-- 📊 Dashboard with real-time analytics
-- 🧾 Accounting & Invoicing with SST compliance
-- 💰 Payroll with Malaysia statutory calculations (EPF, SOCSO, EIS)
-- 📦 Inventory Management with stock tracking
-- 📋 SST Compliance management
+- 📊 **Dashboard** - Real-time business analytics
+- 🧾 **Accounting** - Invoicing with automatic SST calculations
+- 💰 **Payroll** - Malaysia statutory calculations (EPF, SOCSO, EIS, PCB)
+- 📦 **Inventory Management** - Stock tracking and supplier management
+- 📋 **SST Compliance** - Malaysia Sales & Service Tax management
 
-## Tech Stack
+## 🛠 Tech Stack
 
-**Frontend:** Vue 3, Vue Router, Vite
-**Backend:** Node.js, Express.js
+**Frontend:** Vue 3, Vue Router, Vite  
+**Backend:** Node.js, Express.js  
 **Deployment:** Render.com
 
-## Quick Start
+## 📦 Quick Start
 
 ### Development
 ```bash
 # Install dependencies
-npm install
+cd backend && npm install
+cd ../frontend && npm install
 
-# Run both frontend and backend
-npm run dev
+# Run backend (http://localhost:5000)
+cd backend && npm run dev
 
-# Frontend only (http://localhost:3000)
-npm run dev:frontend
-
-# Backend only (http://localhost:10000)
-npm run dev:backend
+# Run frontend (http://localhost:3000)
+cd frontend && npm run dev

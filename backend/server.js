@@ -1,4 +1,4 @@
-// server.js - Production Ready for Render Deployment
+// server.js - Fixed for Render Deployment
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -15,8 +15,6 @@ const complianceRoutes = require('./routes/compliance');
 const hrRoutes = require('./routes/hr');
 const inventoryRoutes = require('./routes/inventory');
 const adminRoutes = require('./routes/admin');
-
-// Add this to your server.js after imports
 const demoData = require('./demo-data');
 
 // CORS configuration for production
@@ -61,7 +59,8 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
     version: '1.0.0',
-    uptime: process.uptime()
+    uptime: process.uptime(),
+    message: 'BizFlow ERP Backend API is running'
   });
 });
 
@@ -111,7 +110,6 @@ app.get('/api/demo/:tenantId/products', (req, res) => {
 
 // Quick setup endpoint for demo
 app.post('/api/demo/setup', (req, res) => {
-  // This would set up demo data in database
   res.json({
     success: true,
     message: 'Demo data loaded successfully',
@@ -127,7 +125,6 @@ app.post('/api/demo/setup', (req, res) => {
 
 // Demo data endpoint
 app.get('/api/demo/setup', (req, res) => {
-  // Pre-load demo data for pitching
   res.json({ 
     status: 'Demo data loaded',
     businesses: Object.keys(demoData.demoBusinesses),
@@ -135,14 +132,55 @@ app.get('/api/demo/setup', (req, res) => {
   });
 });
 
-// Serve frontend in production
+// Serve frontend in production ONLY if the build exists
 if (process.env.NODE_ENV === 'production') {
-  // Serve static files from the frontend dist directory
-  app.use(express.static(path.join(__dirname, '../frontend/dist')));
+  const frontendPath = path.join(__dirname, '../frontend/dist');
   
-  // Handle SPA routing - return index.html for all unknown routes
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+  // Check if frontend build exists before serving
+  const fs = require('fs');
+  if (fs.existsSync(frontendPath)) {
+    console.log('🏗️  Serving frontend from static build');
+    app.use(express.static(frontendPath));
+    
+    // Handle SPA routing - return index.html for all unknown routes
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(frontendPath, 'index.html'));
+    });
+  } else {
+    console.log('⚠️  Frontend build not found, serving API only');
+    
+    // If no frontend build, provide a simple landing page for the root route
+    app.get('/', (req, res) => {
+      res.json({
+        message: 'BizFlow ERP Backend API',
+        status: 'Running',
+        endpoints: {
+          health: '/api/health',
+          demo: '/api/demo/setup',
+          accounting: '/api/accounting/*',
+          payroll: '/api/hr/*',
+          inventory: '/api/inventory/*',
+          compliance: '/api/compliance/*'
+        },
+        frontend: 'Frontend will be deployed separately as static site'
+      });
+    });
+  }
+} else {
+  // Development mode - just API
+  app.get('/', (req, res) => {
+    res.json({
+      message: 'BizFlow ERP Backend API (Development)',
+      status: 'Running',
+      endpoints: {
+        health: '/api/health',
+        demo: '/api/demo/setup',
+        accounting: '/api/accounting/*',
+        payroll: '/api/hr/*',
+        inventory: '/api/inventory/*',
+        compliance: '/api/compliance/*'
+      }
+    });
   });
 }
 
@@ -153,12 +191,12 @@ app.use('/api/*', (req, res) => {
     path: req.originalUrl,
     availableEndpoints: [
       '/api/health',
+      '/api/demo/setup',
       '/api/auth/*',
       '/api/accounting/*',
       '/api/compliance/*',
       '/api/hr/*',
-      '/api/inventory/*',
-      '/api/demo/*'
+      '/api/inventory/*'
     ]
   });
 });
@@ -204,10 +242,6 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log('🚀 BizFlow ERP Demo Server Started');
   console.log(`📍 Port: ${PORT}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 Health Check: http://localhost:${PORT}/api/health`);
-  console.log(`📊 Demo API: http://localhost:${PORT}/api/demo/setup`);
-  
-  if (process.env.NODE_ENV === 'production') {
-    console.log('🏗️  Serving frontend from static build');
-  }
+  console.log(`🔗 Health Check: https://bizflow-erp-backend.onrender.com/api/health`);
+  console.log(`📊 Demo API: https://bizflow-erp-backend.onrender.com/api/demo/setup`);
 });
