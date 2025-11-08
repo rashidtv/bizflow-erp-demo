@@ -170,20 +170,6 @@ import api from './utils/api'
 
 export default {
   name: 'App',
-  setup() {
-    onMounted(async () => {
-      try {
-        // Test API connection on app start
-        const healthResponse = await api.get('/health')
-        console.log('Backend health:', healthResponse.data)
-      } catch (error) {
-        console.warn('Backend connection failed:', error.message)
-      }
-    })
-  }
-}
-export default {
-  name: 'App',
   data() {
     return {
       mobileMenuOpen: false,
@@ -233,15 +219,26 @@ export default {
     // Add notification method to global instance
     this.$showNotification = this.showNotification
     
-    // Demo notification
-    setTimeout(() => {
-      this.showNotification(
-        'Welcome to BizFlow ERP', 
-        'Your business management dashboard is ready.', 
-        'success',
-        4000
-      )
-    }, 1000)
+    // Test API connection on app start
+    api.get('/health')
+      .then(response => {
+        console.log('Backend health:', response.data)
+        this.showNotification(
+          'Welcome to BizFlow ERP', 
+          'Your business management dashboard is ready.', 
+          'success',
+          4000
+        )
+      })
+      .catch(error => {
+        console.warn('Backend connection failed:', error.message)
+        this.showNotification(
+          'Backend Connection', 
+          'Connected to demo mode. Backend features limited.', 
+          'info',
+          4000
+        )
+      })
   }
 }
 </script>
@@ -709,15 +706,9 @@ body.menu-open {
   .notification-content p {
     font-size: 0.8rem;
   }
-  }
-
-  /* Global Fix for Horizontal Scrolling */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
 }
 
+/* Global Fix for Horizontal Scrolling */
 html, body {
   overflow-x: hidden;
   max-width: 100%;
