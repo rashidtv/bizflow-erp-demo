@@ -219,6 +219,17 @@ export default {
     // Add notification method to global instance
     this.$showNotification = this.showNotification
     
+ // Handle route errors
+  this.$router.onError((error) => {
+    console.error('Router error:', error)
+    this.showNotification(
+      'Navigation Error',
+      'The page you are looking for might have been moved.',
+      'error',
+      5000
+    )
+  })
+
     // Test API connection on app start
     api.get('/health')
       .then(response => {

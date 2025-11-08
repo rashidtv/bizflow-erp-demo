@@ -1,35 +1,40 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Dashboard from '@/components/Dashboard.vue'
-import CustomerManagement from '@/components/accounting/CustomerManagement.vue'
-import SSTTemplates from '@/components/compliance/SSTTemplates.vue'
-import PayrollCalculator from '@/components/hr/PayrollCalculator.vue'
-import ProductManagement from '@/components/inventory/ProductManagement.vue'
+import Dashboard from '../components/Dashboard.vue'
+import CustomerManagement from '../components/accounting/CustomerManagement.vue'
+import SSTTemplates from '../components/compliance/SSTTemplates.vue'
+import PayrollCalculator from '../components/hr/PayrollCalculator.vue'
+import ProductManagement from '../components/inventory/ProductManagement.vue'
 
 const routes = [
-  { 
-    path: '/', 
+  {
+    path: '/',
     name: 'Dashboard',
-    component: Dashboard 
+    component: Dashboard
   },
-  { 
-    path: '/accounting', 
+  {
+    path: '/accounting',
     name: 'Accounting',
-    component: CustomerManagement 
+    component: CustomerManagement
   },
-  { 
-    path: '/compliance', 
+  {
+    path: '/compliance',
     name: 'Compliance',
-    component: SSTTemplates 
+    component: SSTTemplates
   },
-  { 
-    path: '/hr', 
+  {
+    path: '/hr',
     name: 'HR',
-    component: PayrollCalculator 
+    component: PayrollCalculator
   },
-  { 
-    path: '/inventory', 
+  {
+    path: '/inventory',
     name: 'Inventory',
-    component: ProductManagement 
+    component: ProductManagement
+  },
+  // Catch all route - redirect to dashboard
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/'
   }
 ]
 

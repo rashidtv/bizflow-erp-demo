@@ -22,8 +22,17 @@ app.config.globalProperties.$filters = {
   }
 }
 
+// Global error handler
+app.config.errorHandler = (err, instance, info) => {
+  console.error('Vue error:', err)
+  console.error('Component:', instance)
+  console.error('Info:', info)
+}
+
 // Use router
 app.use(router)
 
 // Mount app
 app.mount('#app')
+
+console.log('BizFlow ERP Frontend loaded successfully')
