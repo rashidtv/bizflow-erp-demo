@@ -64,6 +64,102 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Enhanced health check endpoints for UptimeRobot
+app.get('/api/health1', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    endpoint: 'health1',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    version: '1.0.0',
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    message: 'BizFlow ERP - Primary Health Check 1'
+  });
+});
+
+app.get('/api/health2', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    endpoint: 'health2',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    version: '1.0.0',
+    uptime: process.uptime(),
+    message: 'BizFlow ERP - Secondary Health Check 2'
+  });
+});
+
+app.get('/api/health3', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    endpoint: 'health3',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    version: '1.0.0',
+    uptime: process.uptime(),
+    message: 'BizFlow ERP - Tertiary Health Check 3'
+  });
+});
+
+app.get('/api/warmup', (req, res) => {
+  // Simulate some warmup activity
+  const start = Date.now();
+  
+  // Simple warmup - you can add database connections, cache warming, etc.
+  const warmupTime = Date.now() - start;
+  
+  res.status(200).json({
+    status: 'WARMED_UP',
+    endpoint: 'warmup',
+    timestamp: new Date().toISOString(),
+    warmupTime: `${warmupTime}ms`,
+    message: 'BizFlow ERP backend warmed up successfully',
+    services: ['API', 'Routes', 'Middleware']
+  });
+});
+
+app.get('/api/ping', (req, res) => {
+  res.status(200).json({
+    status: 'PONG',
+    endpoint: 'ping',
+    timestamp: new Date().toISOString(),
+    responseTime: 'immediate',
+    message: 'BizFlow ERP is alive and responding'
+  });
+});
+
+// Enhanced main health check with more details
+app.get('/api/health', (req, res) => {
+  const healthCheck = {
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    version: '1.0.0',
+    uptime: process.uptime(),
+    memory: {
+      used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + 'MB',
+      total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024) + 'MB'
+    },
+    system: {
+      platform: process.platform,
+      nodeVersion: process.version,
+      pid: process.pid
+    },
+    endpoints: {
+      health1: '/api/health1',
+      health2: '/api/health2', 
+      health3: '/api/health3',
+      warmup: '/api/warmup',
+      ping: '/api/ping',
+      demo: '/api/demo/setup'
+    },
+    message: 'BizFlow ERP Backend API is running optimally'
+  };
+
+  res.status(200).json(healthCheck);
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/tenants', tenantRoutes);
