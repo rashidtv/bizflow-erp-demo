@@ -2,12 +2,10 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 
-// Global styles
-import './assets/global.css'
-
+// Create Vue app
 const app = createApp(App)
 
-// Global properties
+// Global properties for filters
 app.config.globalProperties.$filters = {
   currency(value) {
     if (typeof value !== 'number') {
@@ -24,5 +22,8 @@ app.config.globalProperties.$filters = {
   }
 }
 
+// Use router
 app.use(router)
+
+// Mount app
 app.mount('#app')

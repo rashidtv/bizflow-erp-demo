@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => ({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'http://localhost:10000',
+        target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false
       }
@@ -21,17 +21,16 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     outDir: 'dist',
-    sourcemap: mode === 'production' ? false : true,
+    sourcemap: false,
+    emptyOutDir: true,
     rollupOptions: {
       output: {
         manualChunks: {
           vendor: ['vue', 'vue-router'],
-          charts: ['chart.js']
+          utils: ['axios']
         }
       }
     }
   },
-  define: {
-    __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
-  }
+  base: './'
 }))

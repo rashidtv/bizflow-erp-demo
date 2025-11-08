@@ -165,6 +165,23 @@
 </template>
 
 <script>
+import { onMounted } from 'vue'
+import api from './utils/api'
+
+export default {
+  name: 'App',
+  setup() {
+    onMounted(async () => {
+      try {
+        // Test API connection on app start
+        const healthResponse = await api.get('/health')
+        console.log('Backend health:', healthResponse.data)
+      } catch (error) {
+        console.warn('Backend connection failed:', error.message)
+      }
+    })
+  }
+}
 export default {
   name: 'App',
   data() {
