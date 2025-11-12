@@ -38,8 +38,8 @@
             <div class="overview-icon filing">📅</div>
             <div class="overview-info">
               <h3>Next Filing</h3>
-              <div class="overview-amount">15 Dec 2024</div>
-              <p>Q4 2024 Submission</p>
+              <div class="overview-amount">15 Dec 2025</div>
+              <p>Q4 2025 Submission</p>
             </div>
           </div>
         </div>
@@ -134,8 +134,8 @@
           <div class="form-group">
             <label>Filing Period</label>
             <select v-model="filingData.period">
-              <option value="2024-Q4">Q4 2024 (Oct-Dec)</option>
-              <option value="2025-Q1">Q1 2025 (Jan-Mar)</option>
+              <option value="2025-Q4">Q4 2025 (Oct-Dec)</option>
+              <option value="2025-Q4">Q1 2025 (Jul-Sept)</option>
             </select>
           </div>
           <div class="form-group">
@@ -208,31 +208,31 @@ export default {
       calcTaxAmount: 60,
       calcTotalAmount: 1060,
       filingData: {
-        period: '2024-Q4',
+        period: '2025-Q4',
         taxableSales: 25000,
         taxAmount: 1500
       },
       filingHistory: [
         {
           id: 1,
-          period: '2024-Q3',
+          period: '2025-Q3',
           amount: 1200,
           status: 'approved',
-          filed_date: '2024-10-05'
+          filed_date: '2025-10-05'
         },
         {
           id: 2,
-          period: '2024-Q2',
+          period: '2025-Q2',
           amount: 980,
           status: 'approved',
-          filed_date: '2024-07-05'
+          filed_date: '2025-07-05'
         },
         {
           id: 3,
-          period: '2024-Q1',
+          period: '2025-Q1',
           amount: 750,
           status: 'approved',
-          filed_date: '2024-04-05'
+          filed_date: '2025-04-05'
         }
       ],
       sstTemplates: [

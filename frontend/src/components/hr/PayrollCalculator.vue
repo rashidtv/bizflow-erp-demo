@@ -279,23 +279,23 @@ export default {
         {
           id: 1,
           employeeName: 'Ahmad bin Ismail',
-          period: 'November 2024',
+          period: 'November 2025',
           netSalary: 5200,
-          paymentDate: '2024-11-28'
+          paymentDate: '2025-11-28'
         },
         {
           id: 2,
           employeeName: 'Siti Nurhaliza',
-          period: 'November 2024',
+          period: 'November 2025',
           netSalary: 3050,
-          paymentDate: '2024-11-28'
+          paymentDate: '2025-11-28'
         },
         {
           id: 3,
           employeeName: 'Raj Kumar',
-          period: 'November 2024',
+          period: 'November 2025',
           netSalary: 3800,
-          paymentDate: '2024-11-28'
+          paymentDate: '2025-11-28'
         }
       ]
     }

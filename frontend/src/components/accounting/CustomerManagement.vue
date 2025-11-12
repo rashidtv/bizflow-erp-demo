@@ -456,7 +456,7 @@ export default {
           id: 1,
           type: 'invoice',
           icon: '🧾',
-          text: 'INV-2024-015 marked as paid',
+          text: 'INV-2025-015 marked as paid',
           time: '2 hours ago',
           amount: '+RM 5,300.00'
         },
@@ -471,7 +471,7 @@ export default {
           id: 3,
           type: 'reminder',
           icon: '⏰',
-          text: 'Payment reminder sent for INV-2024-012',
+          text: 'Payment reminder sent for INV-2025-012',
           time: '1 day ago'
         },
         {
@@ -486,11 +486,11 @@ export default {
       invoices: [
         {
           id: 1,
-          invoice_number: 'INV-2024-001',
+          invoice_number: 'INV-2025-001',
           customer_name: 'Tech Solutions Malaysia',
           customer_email: 'accounts@techsolutions.my',
-          created_at: '2024-11-01',
-          due_date: '2024-12-01',
+          created_at: '2025-10-01',
+          due_date: '2025-12-01',
           amount: 5000,
           tax_amount: 300,
           total_amount: 5300,
@@ -498,7 +498,7 @@ export default {
         },
         {
           id: 2,
-          invoice_number: 'INV-2024-002',
+          invoice_number: 'INV-2025-002',
           customer_name: 'Global Manufacturing Bhd',
           customer_email: 'finance@globalmfg.com',
           created_at: '2024-11-05',
