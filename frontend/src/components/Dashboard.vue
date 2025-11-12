@@ -115,15 +115,23 @@
             </ul>
             <button class="demo-btn" @click.stop="startDemo('inventory')">Start Inventory Demo</button>
           </div>
+
+          <!-- E-INVOICING CARD - ADDED PROPERLY -->
+          <div class="demo-card" @click="startDemo('einvoicing')">
+            <div class="demo-card-header">
+              <div class="demo-icon">🧾</div>
+              <h3>E-Invoicing (LHDN MyInvois)</h3>
+            </div>
+            <p>Generate LHDN-compliant e-Invoices with direct MyInvois integration</p>
+            <ul class="feature-list">
+              <li>✓ LHDN MyInvois integration</li>
+              <li>✓ Real-time submission</li>
+              <li>✓ Status tracking</li>
+            </ul>
+            <button class="demo-btn" @click.stop="startDemo('einvoicing')">Start E-Invoicing Demo</button>
+          </div>
         </div>
       </div>
-      <!-- Add this to your dashboard navigation section -->
-<div class="dashboard-card" @click="$router.push('/einvoicing')">
-  <div class="card-icon">🧾</div>
-  <h3>E-Invoicing</h3>
-  <p>LHDN MyInvois Integration</p>
-  <div class="card-badge">New</div>
-</div>
 
       <!-- Recent Activity -->
       <div class="activity-section">
@@ -145,6 +153,14 @@
             </div>
             <div class="activity-amount">RM 2,150.00</div>
           </div>
+          <div class="activity-item">
+            <div class="activity-icon">🧾</div>
+            <div class="activity-content">
+              <p><strong>E-Invoice</strong> submitted to LHDN MyInvois</p>
+              <span class="activity-time">Just now</span>
+            </div>
+            <div class="activity-amount">RM 1,500.00</div>
+          </div>
         </div>
       </div>
     </div>
@@ -157,12 +173,14 @@ export default {
   methods: {
     startDemo(scenario) {
       // Show notification first
-      this.$root.showNotification(
-        'Demo Started',
-        `Starting ${this.getDemoTitle(scenario)} demo...`,
-        'info',
-        3000
-      )
+      if (this.$root.showNotification) {
+        this.$root.showNotification(
+          'Demo Started',
+          `Starting ${this.getDemoTitle(scenario)} demo...`,
+          'info',
+          3000
+        )
+      }
       
       // Route to the appropriate page after a short delay
       setTimeout(() => {
@@ -179,6 +197,9 @@ export default {
           case 'inventory':
             this.$router.push('/inventory?demo=true');
             break;
+          case 'einvoicing':
+            this.$router.push('/einvoicing?demo=true');
+            break;
           default:
             this.$router.push('/accounting?demo=true');
         }
@@ -190,7 +211,8 @@ export default {
         'quickInvoice': 'Quick Invoice & Accounting',
         'compliance': 'SST Compliance', 
         'payroll': 'HR & Payroll',
-        'inventory': 'Inventory Management'
+        'inventory': 'Inventory Management',
+        'einvoicing': 'E-Invoicing'
       }
       return titles[scenario] || 'Accounting'
     }
@@ -199,6 +221,7 @@ export default {
 </script>
 
 <style scoped>
+/* Your existing CSS remains exactly the same - no changes needed */
 /* Global container to prevent overflow */
 .dashboard-container {
   width: 100%;
@@ -233,7 +256,7 @@ export default {
 
 .header-content {
   flex: 1;
-  min-width: 0; /* Important for flexbox overflow */
+  min-width: 0;
   max-width: 100%;
 }
 
