@@ -29,6 +29,41 @@ api.interceptors.request.use(
   }
 );
 
+// E-Invoicing API methods
+export const eInvoicingAPI = {
+  // Generate and submit e-Invoice
+  generateEInvoice: (invoiceData) => {
+    return api.post('/einvoicing/generate', invoiceData);
+  },
+
+  // Get e-Invoice status
+  getEInvoiceStatus: (invoiceId) => {
+    return api.get(`/einvoicing/status/${invoiceId}`);
+  },
+
+  // Cancel e-Invoice
+  cancelEInvoice: (invoiceId, reason) => {
+    return api.post(`/einvoicing/cancel/${invoiceId}`, { reason });
+  },
+
+  // Validate e-Invoice data
+  validateEInvoice: (invoiceData) => {
+    return api.post('/einvoicing/validate', { invoiceData });
+  },
+
+  // Check MyInvois API health
+  checkHealth: () => {
+    return api.get('/einvoicing/health');
+  }
+};
+
+// Export individual methods as well
+export const generateEInvoice = eInvoicingAPI.generateEInvoice;
+export const getEInvoiceStatus = eInvoicingAPI.getEInvoiceStatus;
+export const cancelEInvoice = eInvoicingAPI.cancelEInvoice;
+export const validateEInvoice = eInvoicingAPI.validateEInvoice;
+export const checkEInvoiceHealth = eInvoicingAPI.checkHealth;
+
 // Response interceptor
 api.interceptors.response.use(
   (response) => {

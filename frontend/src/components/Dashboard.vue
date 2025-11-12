@@ -117,6 +117,13 @@
           </div>
         </div>
       </div>
+      <!-- Add this to your dashboard navigation section -->
+<div class="dashboard-card" @click="$router.push('/einvoicing')">
+  <div class="card-icon">🧾</div>
+  <h3>E-Invoicing</h3>
+  <p>LHDN MyInvois Integration</p>
+  <div class="card-badge">New</div>
+</div>
 
       <!-- Recent Activity -->
       <div class="activity-section">
