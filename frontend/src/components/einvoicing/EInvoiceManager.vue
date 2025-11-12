@@ -1,172 +1,213 @@
 <template>
   <div class="e-invoice-manager">
-    <div class="header">
-      <h1>E-Invoicing Management</h1>
-      <p>Generate and manage e-Invoices compliant with LHDN MyInvois</p>
+    <!-- Header -->
+    <div class="page-header">
+      <h1>E-Invoicing</h1>
+      <p class="subtitle">LHDN MyInvois Compliant Electronic Invoicing</p>
     </div>
 
-    <!-- Health Status -->
-    <div class="health-status" :class="healthStatus">
-      <div class="status-indicator"></div>
-      <span>MyInvois API: {{ healthMessage }}</span>
-      <button @click="checkHealth" class="btn-sm">Refresh</button>
+    <!-- Status Overview -->
+    <div class="status-overview">
+      <div class="status-card" :class="apiStatus">
+        <div class="status-icon">
+          <span v-if="apiStatus === 'connected'">✅</span>
+          <span v-else-if="apiStatus === 'disconnected'">❌</span>
+          <span v-else>⏳</span>
+        </div>
+        <div class="status-info">
+          <h3>MyInvois API</h3>
+          <p>{{ apiStatusMessage }}</p>
+        </div>
+        <button @click="checkApiStatus" class="btn-refresh" :disabled="checkingStatus">
+          {{ checkingStatus ? 'Checking...' : 'Refresh' }}
+        </button>
+      </div>
     </div>
 
-    <!-- Main Actions -->
-    <div class="action-grid">
+    <!-- Quick Actions -->
+    <div class="quick-actions">
       <div class="action-card" @click="showGenerateForm = true">
         <div class="action-icon">📄</div>
-        <h3>Generate e-Invoice</h3>
-        <p>Create and submit new e-Invoice to LHDN</p>
+        <div class="action-content">
+          <h3>Create e-Invoice</h3>
+          <p>Generate LHDN-compliant electronic invoice</p>
+        </div>
+        <div class="action-arrow">→</div>
       </div>
 
-      <div class="action-card" @click="loadSubmissions">
+      <div class="action-card" @click="viewSubmissions">
         <div class="action-icon">📋</div>
-        <h3>View Submissions</h3>
-        <p>Check status of submitted e-Invoices</p>
-      </div>
-
-      <div class="action-card" @click="showTestInterface = true">
-        <div class="action-icon">🧪</div>
-        <h3>Test Interface</h3>
-        <p>Test e-Invoicing functionality</p>
+        <div class="action-content">
+          <h3>View Submissions</h3>
+          <p>Check status of submitted e-Invoices</p>
+        </div>
+        <div class="action-arrow">→</div>
       </div>
     </div>
 
-    <!-- Generate e-Invoice Form -->
-    <GlobalModal v-model="showGenerateForm" title="Generate e-Invoice" size="large">
-      <div class="generate-form">
-        <div class="form-section">
-          <h3>Invoice Details</h3>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Invoice Number *</label>
-              <input v-model="newInvoice.invoiceNumber" type="text" placeholder="INV-2024-001">
-            </div>
-            <div class="form-group">
-              <label>Invoice Date</label>
-              <input v-model="newInvoice.invoiceDate" type="date">
+    <!-- Generate e-Invoice Modal -->
+    <div v-if="showGenerateForm" class="modal-overlay" @click.self="showGenerateForm = false">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Create e-Invoice</h2>
+          <button @click="showGenerateForm = false" class="btn-close">×</button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Invoice Details -->
+          <div class="form-section">
+            <h3>Invoice Details</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Invoice Number *</label>
+                <input v-model="newInvoice.invoiceNumber" type="text" 
+                       placeholder="INV-2024-001" class="form-input">
+              </div>
+              <div class="form-group">
+                <label>Invoice Date *</label>
+                <input v-model="newInvoice.invoiceDate" type="date" class="form-input">
+              </div>
+              <div class="form-group">
+                <label>Total Amount (MYR) *</label>
+                <input v-model="newInvoice.totalAmount" type="number" step="0.01" 
+                       placeholder="0.00" class="form-input" @input="calculateTax">
+              </div>
+              <div class="form-group">
+                <label>Tax Amount (MYR)</label>
+                <input v-model="newInvoice.taxAmount" type="number" step="0.01" 
+                       placeholder="0.00" class="form-input" readonly>
+              </div>
             </div>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Total Amount (MYR) *</label>
-              <input v-model="newInvoice.totalAmount" type="number" step="0.01" placeholder="100.00">
+
+          <!-- Customer Information -->
+          <div class="form-section">
+            <h3>Customer Information</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Customer Name *</label>
+                <input v-model="newInvoice.customer.name" type="text" 
+                       placeholder="Customer Name" class="form-input">
+              </div>
+              <div class="form-group">
+                <label>Tax ID (TIN)</label>
+                <input v-model="newInvoice.customer.taxId" type="text" 
+                       placeholder="123456789012" class="form-input">
+              </div>
+              <div class="form-group">
+                <label>Email</label>
+                <input v-model="newInvoice.customer.email" type="email" 
+                       placeholder="customer@email.com" class="form-input">
+              </div>
+              <div class="form-group">
+                <label>Phone</label>
+                <input v-model="newInvoice.customer.phone" type="tel" 
+                       placeholder="+60123456789" class="form-input">
+              </div>
             </div>
-            <div class="form-group">
-              <label>Tax Amount (MYR)</label>
-              <input v-model="newInvoice.taxAmount" type="number" step="0.01" placeholder="6.00">
+            <div class="form-group full-width">
+              <label>Address</label>
+              <textarea v-model="newInvoice.customer.address" 
+                        placeholder="Customer address" class="form-textarea"></textarea>
+            </div>
+          </div>
+
+          <!-- Invoice Items -->
+          <div class="form-section">
+            <div class="section-header">
+              <h3>Invoice Items</h3>
+              <button @click="addItem" class="btn-add">+ Add Item</button>
+            </div>
+            <div v-for="(item, index) in newInvoice.items" :key="index" class="item-row">
+              <div class="item-grid">
+                <div class="form-group">
+                  <label>Description *</label>
+                  <input v-model="item.description" type="text" 
+                         placeholder="Item description" class="form-input">
+                </div>
+                <div class="form-group">
+                  <label>Quantity *</label>
+                  <input v-model="item.quantity" type="number" step="1" 
+                         placeholder="1" class="form-input" @input="calculateTotals">
+                </div>
+                <div class="form-group">
+                  <label>Unit Price (MYR) *</label>
+                  <input v-model="item.unitPrice" type="number" step="0.01" 
+                         placeholder="0.00" class="form-input" @input="calculateTotals">
+                </div>
+                <div class="form-group">
+                  <label>Total</label>
+                  <input :value="(item.quantity * item.unitPrice).toFixed(2)" 
+                         type="text" class="form-input" readonly>
+                </div>
+                <button @click="removeItem(index)" class="btn-remove" 
+                        :disabled="newInvoice.items.length === 1">Remove</button>
+              </div>
             </div>
           </div>
         </div>
 
-        <div class="form-section">
-          <h3>Customer Information</h3>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Customer Name *</label>
-              <input v-model="newInvoice.customer.name" type="text" placeholder="Customer Name">
-            </div>
-            <div class="form-group">
-              <label>Tax ID (TIN)</label>
-              <input v-model="newInvoice.customer.taxId" type="text" placeholder="123456789012">
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Email</label>
-              <input v-model="newInvoice.customer.email" type="email" placeholder="customer@email.com">
-            </div>
-            <div class="form-group">
-              <label>Phone</label>
-              <input v-model="newInvoice.customer.phone" type="tel" placeholder="+60123456789">
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Address</label>
-            <textarea v-model="newInvoice.customer.address" placeholder="Customer address"></textarea>
-          </div>
-        </div>
-
-        <div class="form-section">
-          <h3>Invoice Items</h3>
-          <div v-for="(item, index) in newInvoice.items" :key="index" class="item-row">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Description *</label>
-                <input v-model="item.description" type="text" placeholder="Item description">
-              </div>
-              <div class="form-group">
-                <label>Quantity *</label>
-                <input v-model="item.quantity" type="number" step="1" placeholder="1">
-              </div>
-              <div class="form-group">
-                <label>Unit Price (MYR) *</label>
-                <input v-model="item.unitPrice" type="number" step="0.01" placeholder="50.00">
-              </div>
-              <button @click="removeItem(index)" class="btn-danger btn-sm">Remove</button>
-            </div>
-          </div>
-          <button @click="addItem" class="btn-secondary">+ Add Item</button>
-        </div>
-
-        <div class="form-actions">
-          <button @click="validateInvoice" class="btn-secondary">Validate</button>
-          <button @click="generateInvoice" :disabled="generating" class="btn-primary">
-            {{ generating ? 'Generating...' : 'Generate e-Invoice' }}
+        <div class="modal-footer">
+          <button @click="showGenerateForm = false" class="btn-cancel">Cancel</button>
+          <button @click="validateAndSubmit" :disabled="generating" class="btn-primary">
+            {{ generating ? 'Submitting...' : 'Generate e-Invoice' }}
           </button>
         </div>
       </div>
-    </GlobalModal>
+    </div>
 
-    <!-- Submissions List -->
-    <div v-if="submissions.length > 0" class="submissions-section">
+    <!-- Recent Submissions -->
+    <div v-if="recentSubmissions.length > 0" class="recent-submissions">
       <h3>Recent Submissions</h3>
       <div class="submissions-list">
-        <div v-for="submission in submissions" :key="submission.id" class="submission-card">
-          <div class="submission-header">
-            <span class="invoice-number">{{ submission.invoiceNumber }}</span>
-            <span class="status-badge" :class="submission.status">{{ submission.status }}</span>
-          </div>
-          <div class="submission-details">
-            <p><strong>Customer:</strong> {{ submission.customer.name }}</p>
-            <p><strong>Amount:</strong> MYR {{ submission.summary.totalAmount }}</p>
-            <p><strong>Submitted:</strong> {{ formatDate(submission.timestamp) }}</p>
+        <div v-for="submission in recentSubmissions" :key="submission.id" 
+             class="submission-item">
+          <div class="submission-info">
+            <div class="submission-header">
+              <span class="invoice-number">{{ submission.invoiceNumber }}</span>
+              <span class="status-badge" :class="submission.status">{{ submission.status }}</span>
+            </div>
+            <div class="submission-details">
+              <p><strong>Customer:</strong> {{ submission.customer.name }}</p>
+              <p><strong>Amount:</strong> MYR {{ submission.summary.totalAmount.toFixed(2) }}</p>
+              <p><strong>Submitted:</strong> {{ formatDate(submission.timestamp) }}</p>
+            </div>
           </div>
           <div class="submission-actions">
-            <button @click="checkStatus(submission.einvoiceId)" class="btn-sm">Check Status</button>
-            <button @click="viewDetails(submission)" class="btn-sm btn-secondary">Details</button>
+            <button @click="checkStatus(submission.einvoiceId)" class="btn-secondary">
+              Check Status
+            </button>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- Test Interface Modal -->
-    <GlobalModal v-model="showTestInterface" title="E-Invoicing Test Interface" size="large">
-      <EInvoiceTest @close="showTestInterface = false" />
-    </GlobalModal>
   </div>
 </template>
 
 <script>
-import { generateEInvoice, getEInvoiceStatus, validateEInvoice, checkEInvoiceHealth } from '@/utils/api'
-import EInvoiceTest from './EInvoiceTest.vue'
+import { generateEInvoice, getEInvoiceStatus, checkEInvoiceHealth } from '@/utils/api'
 
 export default {
   name: 'EInvoiceManager',
-  components: {
-    EInvoiceTest
-  },
   data() {
     return {
       showGenerateForm: false,
-      showTestInterface: false,
       generating: false,
-      healthStatus: 'unknown',
-      healthMessage: 'Checking...',
-      submissions: [],
-      newInvoice: {
-        invoiceNumber: '',
+      checkingStatus: false,
+      apiStatus: 'checking', // checking, connected, disconnected
+      apiStatusMessage: 'Checking API connection...',
+      recentSubmissions: [],
+      newInvoice: this.getDefaultInvoice()
+    }
+  },
+  mounted() {
+    this.checkApiStatus()
+    this.loadRecentSubmissions()
+  },
+  methods: {
+    getDefaultInvoice() {
+      return {
+        invoiceNumber: 'INV-' + new Date().getFullYear() + '-' + Math.random().toString(36).substr(2, 5).toUpperCase(),
         invoiceDate: new Date().toISOString().split('T')[0],
         totalAmount: 0,
         taxAmount: 0,
@@ -186,21 +227,19 @@ export default {
           }
         ]
       }
-    }
-  },
-  mounted() {
-    this.checkHealth()
-    this.loadSubmissions()
-  },
-  methods: {
-    async checkHealth() {
+    },
+
+    async checkApiStatus() {
+      this.checkingStatus = true
       try {
         const response = await checkEInvoiceHealth()
-        this.healthStatus = 'healthy'
-        this.healthMessage = 'Connected to MyInvois API'
+        this.apiStatus = 'connected'
+        this.apiStatusMessage = 'Connected to LHDN MyInvois API'
       } catch (error) {
-        this.healthStatus = 'unhealthy'
-        this.healthMessage = 'MyInvois API unavailable'
+        this.apiStatus = 'disconnected'
+        this.apiStatusMessage = 'MyInvois API temporarily unavailable'
+      } finally {
+        this.checkingStatus = false
       }
     },
 
@@ -214,16 +253,43 @@ export default {
     },
 
     removeItem(index) {
-      this.newInvoice.items.splice(index, 1)
+      if (this.newInvoice.items.length > 1) {
+        this.newInvoice.items.splice(index, 1)
+        this.calculateTotals()
+      }
     },
 
-    async validateInvoice() {
-      try {
-        const response = await validateEInvoice(this.newInvoice)
-        alert('Invoice data is valid! You can now generate the e-Invoice.')
-      } catch (error) {
-        alert('Validation failed: ' + (error.response?.data?.errors?.join(', ') || error.message))
+    calculateTotals() {
+      const subtotal = this.newInvoice.items.reduce((sum, item) => {
+        return sum + (item.quantity * item.unitPrice)
+      }, 0)
+      
+      this.newInvoice.totalAmount = subtotal
+      this.calculateTax()
+    },
+
+    calculateTax() {
+      this.newInvoice.taxAmount = this.newInvoice.totalAmount * 0.06 // 6% SST
+    },
+
+    async validateAndSubmit() {
+      // Basic validation
+      if (!this.newInvoice.invoiceNumber) {
+        alert('Please enter an invoice number')
+        return
       }
+
+      if (!this.newInvoice.customer.name) {
+        alert('Please enter customer name')
+        return
+      }
+
+      if (this.newInvoice.items.some(item => !item.description)) {
+        alert('Please enter description for all items')
+        return
+      }
+
+      await this.generateInvoice()
     },
 
     async generateInvoice() {
@@ -236,15 +302,15 @@ export default {
         })
 
         if (response.data.success) {
-          alert('e-Invoice generated and submitted successfully!')
-          this.submissions.unshift(response.data.data)
+          alert('e-Invoice submitted to LHDN successfully!')
+          this.recentSubmissions.unshift(response.data.data)
           this.showGenerateForm = false
-          this.resetForm()
+          this.newInvoice = this.getDefaultInvoice()
         } else {
-          throw new Error(response.data.error || 'Generation failed')
+          throw new Error(response.data.error || 'Submission failed')
         }
       } catch (error) {
-        alert('Failed to generate e-Invoice: ' + (error.response?.data?.error || error.message))
+        alert('Failed to submit e-Invoice: ' + (error.response?.data?.error || error.message))
       } finally {
         this.generating = false
       }
@@ -259,41 +325,24 @@ export default {
       }
     },
 
-    viewDetails(submission) {
-      alert(JSON.stringify(submission, null, 2))
+    viewSubmissions() {
+      // In a real app, this would navigate to a submissions page
+      alert('View all submissions feature coming soon!')
     },
 
-    loadSubmissions() {
-      // For demo purposes - in real app, you'd fetch from backend
-      this.submissions = []
-    },
-
-    resetForm() {
-      this.newInvoice = {
-        invoiceNumber: 'INV-' + new Date().getTime(),
-        invoiceDate: new Date().toISOString().split('T')[0],
-        totalAmount: 0,
-        taxAmount: 0,
-        customer: {
-          name: '',
-          taxId: '',
-          email: '',
-          phone: '',
-          address: ''
-        },
-        items: [
-          {
-            description: '',
-            quantity: 1,
-            unitPrice: 0,
-            taxRate: 6
-          }
-        ]
-      }
+    loadRecentSubmissions() {
+      // Mock data for demo - in real app, fetch from backend
+      this.recentSubmissions = []
     },
 
     formatDate(dateString) {
-      return new Date(dateString).toLocaleString()
+      return new Date(dateString).toLocaleDateString('en-MY', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
     }
   }
 }
@@ -301,70 +350,100 @@ export default {
 
 <style scoped>
 .e-invoice-manager {
-  padding: 20px;
+  padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
 }
 
-.header {
+.page-header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 2rem;
 }
 
-.header h1 {
+.page-header h1 {
   color: #2c3e50;
-  margin-bottom: 10px;
+  margin-bottom: 0.5rem;
+  font-size: 2.5rem;
 }
 
-.health-status {
+.subtitle {
+  color: #6c757d;
+  font-size: 1.1rem;
+}
+
+.status-overview {
+  margin-bottom: 2rem;
+}
+
+.status-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 15px;
-  border-radius: 5px;
-  margin-bottom: 30px;
-  background: #f8f9fa;
+  gap: 1rem;
+  border-left: 4px solid #6c757d;
 }
 
-.health-status.healthy {
-  background: #d4edda;
-  color: #155724;
+.status-card.connected {
+  border-left-color: #28a745;
 }
 
-.health-status.unhealthy {
-  background: #f8d7da;
-  color: #721c24;
+.status-card.disconnected {
+  border-left-color: #dc3545;
 }
 
-.status-indicator {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+.status-icon {
+  font-size: 1.5rem;
 }
 
-.healthy .status-indicator {
-  background: #28a745;
+.status-info {
+  flex: 1;
 }
 
-.unhealthy .status-indicator {
-  background: #dc3545;
+.status-info h3 {
+  margin: 0 0 0.25rem 0;
+  color: #2c3e50;
 }
 
-.action-grid {
+.status-info p {
+  margin: 0;
+  color: #6c757d;
+}
+
+.btn-refresh {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-refresh:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.quick-actions {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-  margin-bottom: 40px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
 }
 
 .action-card {
   background: white;
-  padding: 25px;
-  border-radius: 10px;
+  padding: 1.5rem;
+  border-radius: 12px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  text-align: center;
+  transition: all 0.3s ease;
+  border: 1px solid #e9ecef;
 }
 
 .action-card:hover {
@@ -373,31 +452,121 @@ export default {
 }
 
 .action-icon {
-  font-size: 2em;
-  margin-bottom: 15px;
+  font-size: 2rem;
 }
 
-.generate-form {
-  max-height: 70vh;
-  overflow-y: auto;
+.action-content {
+  flex: 1;
 }
 
-.form-section {
-  margin-bottom: 25px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #eee;
-}
-
-.form-section h3 {
-  margin-bottom: 15px;
+.action-content h3 {
+  margin: 0 0 0.5rem 0;
   color: #2c3e50;
 }
 
-.form-row {
+.action-content p {
+  margin: 0;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.action-arrow {
+  color: #007bff;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #2c3e50;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #6c757d;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.form-section {
+  margin-bottom: 2rem;
+}
+
+.form-section h3 {
+  margin-bottom: 1rem;
+  color: #2c3e50;
+  border-bottom: 2px solid #007bff;
+  padding-bottom: 0.5rem;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.btn-add {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 15px;
-  margin-bottom: 15px;
+  gap: 1rem;
+}
+
+.item-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr auto;
+  gap: 1rem;
+  align-items: end;
+}
+
+.full-width {
+  grid-column: 1 / -1;
 }
 
 .form-group {
@@ -406,62 +575,120 @@ export default {
 }
 
 .form-group label {
-  margin-bottom: 5px;
+  margin-bottom: 0.5rem;
   font-weight: 500;
-  color: #555;
+  color: #495057;
 }
 
-.form-group input,
-.form-group textarea {
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
+.form-input, .form-textarea {
+  padding: 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 0.9rem;
 }
 
-.form-group textarea {
-  min-height: 60px;
+.form-textarea {
+  min-height: 80px;
   resize: vertical;
+}
+
+.btn-remove {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  height: fit-content;
+}
+
+.btn-remove:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
 }
 
 .item-row {
   background: #f8f9fa;
-  padding: 15px;
-  border-radius: 5px;
-  margin-bottom: 10px;
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
 }
 
-.form-actions {
+.modal-footer {
   display: flex;
-  gap: 10px;
   justify-content: flex-end;
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid #eee;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-top: 1px solid #e9ecef;
 }
 
-.submissions-section {
-  margin-top: 40px;
+.btn-cancel {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-primary:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+/* Recent Submissions */
+.recent-submissions {
+  margin-top: 3rem;
+}
+
+.recent-submissions h3 {
+  margin-bottom: 1rem;
+  color: #2c3e50;
 }
 
 .submissions-list {
   display: grid;
-  gap: 15px;
+  gap: 1rem;
 }
 
-.submission-card {
+.submission-item {
   background: white;
-  padding: 20px;
+  padding: 1.5rem;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  border-left: 4px solid #007bff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.submission-info {
+  flex: 1;
 }
 
 .submission-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 0.5rem;
 }
 
 .invoice-number {
@@ -470,9 +697,9 @@ export default {
 }
 
 .status-badge {
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 12px;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
   font-weight: 500;
 }
 
@@ -487,53 +714,49 @@ export default {
 }
 
 .submission-details {
-  margin-bottom: 15px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.5rem;
 }
 
 .submission-details p {
-  margin: 5px 0;
-  font-size: 14px;
+  margin: 0;
+  font-size: 0.9rem;
+  color: #6c757d;
 }
 
 .submission-actions {
   display: flex;
-  gap: 10px;
+  gap: 0.5rem;
 }
 
-.btn-primary {
-  background: #007bff;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
-  cursor: pointer;
-}
+/* Responsive Design */
+@media (max-width: 768px) {
+  .e-invoice-manager {
+    padding: 1rem;
+  }
 
-.btn-secondary {
-  background: #6c757d;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
-  cursor: pointer;
-}
+  .quick-actions {
+    grid-template-columns: 1fr;
+  }
 
-.btn-danger {
-  background: #dc3545;
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  border-radius: 3px;
-  cursor: pointer;
-}
+  .item-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
 
-.btn-sm {
-  padding: 5px 10px;
-  font-size: 12px;
-}
+  .submission-item {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
 
-.btn-primary:disabled {
-  background: #6c757d;
-  cursor: not-allowed;
+  .submission-actions {
+    justify-content: center;
+  }
+
+  .modal-content {
+    margin: 1rem;
+  }
 }
 </style>
