@@ -12,10 +12,7 @@ class MyInvoisService {
   async authenticate() {
     try {
       console.log('🔐 Attempting MyInvois authentication...');
-      console.log('Base URL:', this.baseURL);
-      console.log('Client ID exists:', !!myInvoisConfig.clientId);
-      console.log('Client Secret exists:', !!myInvoisConfig.clientSecret);
-
+      
       // Check if credentials are provided
       if (!myInvoisConfig.clientId || !myInvoisConfig.clientSecret) {
         throw new Error('MyInvois credentials missing. Please check environment variables.');
@@ -39,7 +36,6 @@ class MyInvoisService {
       this.tokenExpiry = Date.now() + (response.data.expires_in * 1000);
       
       console.log('✅ MyInvois authentication successful');
-      console.log('Token expires in:', response.data.expires_in, 'seconds');
       return this.accessToken;
     } catch (error) {
       console.error('❌ MyInvois authentication failed:');
@@ -69,12 +65,10 @@ class MyInvoisService {
   async submitEInvoice(invoiceData) {
     try {
       console.log('📤 Submitting e-Invoice to MyInvois...');
-      console.log('Invoice Number:', invoiceData.invoiceNumber);
-      console.log('Customer:', invoiceData.customer?.name);
       
       const token = await this.ensureAuthenticated();
-
       const myInvoisPayload = this.transformToMyInvoisFormat(invoiceData);
+
       console.log('✅ Payload prepared successfully');
 
       const response = await axios.post(
@@ -91,18 +85,31 @@ class MyInvoisService {
       );
 
       console.log('✅ MyInvois submission successful');
-      console.log('Response Status:', response.status);
-      console.log('Submission ID:', response.data?.documents?.[0]?.uuid);
+      console.log('Response data:', JSON.stringify(response.data, null, 2));
+
+      // SAFE RESPONSE HANDLING - Check if documents array exists
+      if (!response.data || !response.data.documents || !Array.isArray(response.data.documents) || response.data.documents.length === 0) {
+        console.warn('⚠️ Unexpected response format from MyInvois:', response.data);
+        return {
+          success: true,
+          data: response.data,
+          message: 'e-Invoice submitted successfully (unexpected response format)',
+          submissionId: 'pending-' + Date.now()
+        };
+      }
+
+      const firstDocument = response.data.documents[0];
       
       return {
         success: true,
         data: response.data,
-        message: 'e-Invoice successfully submitted to LHDN MyInvois'
+        message: 'e-Invoice successfully submitted to LHDN MyInvois',
+        submissionId: firstDocument.uuid || firstDocument.internalId || 'unknown'
       };
     } catch (error) {
       console.error('❌ MyInvois submission failed:');
       console.error('Status:', error.response?.status);
-      console.error('Error Data:', JSON.stringify(error.response?.data, null, 2));
+      console.error('Error Data:', error.response?.data);
       console.error('Error Message:', error.message);
       
       // Provide more specific error messages
@@ -135,6 +142,30 @@ class MyInvoisService {
     const calculatedSubtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
     const finalTotalAmount = totalAmount || calculatedSubtotal;
     const finalTaxAmount = taxAmount || (finalTotalAmount * 0.06); // Default 6% SST
+
+    // Ensure required fields have defaults
+    const safeCustomer = {
+      name: customer.name || 'Unknown Customer',
+      taxId: customer.taxId || '000000000000',
+      branch: customer.branch || '000',
+      email: customer.email || 'customer@example.com',
+      phone: customer.phone || '0300000000',
+      address: customer.address || 'Not Provided',
+      city: customer.city || 'Kuala Lumpur',
+      state: customer.state || 'WP Kuala Lumpur',
+      country: customer.country || 'MY'
+    };
+
+    const safeItems = items.map((item, index) => ({
+      id: index + 1,
+      description: item.description || 'Product/Service',
+      itemType: 'GS1',
+      itemCode: item.sku || `ITEM${index + 1}`,
+      unitType: 'PCE',
+      quantity: item.quantity || 1,
+      unitPrice: item.unitPrice || 0,
+      taxRate: item.taxRate || 6
+    }));
 
     return {
       "documents": [
@@ -174,22 +205,22 @@ class MyInvoisService {
 
           "buyer": {
             "id": {
-              "idType": customer.taxId ? "TIN" : "NIDN",
-              "idValue": customer.taxId || "000000000000",
-              "branch": customer.branch || "000"
+              "idType": safeCustomer.taxId ? "TIN" : "NIDN",
+              "idValue": safeCustomer.taxId,
+              "branch": safeCustomer.branch
             },
-            "name": customer.name,
+            "name": safeCustomer.name,
             "address": {
-              "country": customer.country || "MY",
-              "governate": customer.state || "WP Kuala Lumpur",
-              "regionCity": customer.city || "Kuala Lumpur",
-              "street": customer.address || "Not Provided",
+              "country": safeCustomer.country,
+              "governate": safeCustomer.state,
+              "regionCity": safeCustomer.city,
+              "street": safeCustomer.address,
               "buildingNumber": "1"
             },
             "contact": {
-              "name": customer.contactName || customer.name,
-              "phone": customer.phone || "0300000000",
-              "email": customer.email || "customer@example.com"
+              "name": safeCustomer.name,
+              "phone": safeCustomer.phone,
+              "email": safeCustomer.email
             }
           },
 
@@ -213,13 +244,13 @@ class MyInvoisService {
             "terms": ""
           },
 
-          "invoiceLines": items.map((item, index) => ({
-            "id": index + 1,
-            "description": item.description || "Product/Service",
-            "itemType": "GS1",
-            "itemCode": item.sku || `ITEM${index + 1}`,
-            "unitType": "PCE",
-            "quantity": item.quantity || 1,
+          "invoiceLines": safeItems.map((item) => ({
+            "id": item.id,
+            "description": item.description,
+            "itemType": item.itemType,
+            "itemCode": item.itemCode,
+            "unitType": item.unitType,
+            "quantity": item.quantity,
             "salesTotal": item.unitPrice * item.quantity,
             "total": item.unitPrice * item.quantity,
             "valueDifference": 0,
@@ -228,7 +259,7 @@ class MyInvoisService {
             "itemsDiscount": 0,
             "unitValue": {
               "currencySold": "MYR",
-              "amountEGP": item.unitPrice || 0
+              "amountEGP": item.unitPrice
             },
             "discount": {
               "rate": 0,
@@ -237,9 +268,9 @@ class MyInvoisService {
             "taxableItems": [
               {
                 "taxType": "T1",
-                "amount": (item.unitPrice * item.quantity * 0.06), // 6% SST
+                "amount": (item.unitPrice * item.quantity * (item.taxRate / 100)),
                 "subType": "V009",
-                "rate": 6
+                "rate": item.taxRate
               }
             ]
           })),

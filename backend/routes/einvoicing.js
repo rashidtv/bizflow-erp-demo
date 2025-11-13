@@ -12,12 +12,7 @@ router.get('/debug/auth', async (req, res) => {
       res.json({
         success: true,
         message: 'MyInvois authentication test passed',
-        environment: process.env.NODE_ENV || 'development',
-        baseURL: myInvoisService.baseURL,
-        seller: {
-          name: process.env.SELLER_NAME || 'Not configured',
-          tin: process.env.SELLER_TIN ? '***' + process.env.SELLER_TIN.slice(-4) : 'Not configured'
-        }
+        environment: process.env.NODE_ENV || 'development'
       });
     } else {
       res.status(500).json({
@@ -48,8 +43,7 @@ router.get('/health', async (req, res) => {
       success: true,
       message: 'MyInvois API is accessible',
       timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV || 'development',
-      baseURL: myInvoisService.baseURL
+      environment: process.env.NODE_ENV || 'development'
     });
   } catch (error) {
     console.error('MyInvois health check failed:', error.message);
@@ -110,7 +104,7 @@ router.post('/generate', async (req, res) => {
       invoiceDate: invoiceData.invoiceDate || new Date().toISOString(),
       customer: customerInfo,
       items: items,
-      totalAmount: invoiceData.totalAmount,
+      totalAmount: invoiceData.totalAmount || 0,
       taxAmount: invoiceData.taxAmount || 0
     };
 
@@ -122,27 +116,36 @@ router.post('/generate', async (req, res) => {
     if (submissionResult.success) {
       console.log('✅ MyInvois submission successful');
       
-      const responseData = {
+      // SAFE RESPONSE HANDLING - Handle different response formats
+      let responseData = {
         success: true,
-        message: 'e-Invoice generated and submitted to LHDN MyInvois successfully',
+        message: submissionResult.message,
         data: {
-          einvoiceId: submissionResult.data.documents[0].internalId,
+          einvoiceId: invoiceData.invoiceNumber, // Fallback to invoice number
           invoiceNumber: invoiceData.invoiceNumber,
           timestamp: new Date().toISOString(),
-          submissionId: submissionResult.data.documents[0].uuid,
-          status: submissionResult.data.documents[0].status || 'submitted',
+          submissionId: submissionResult.submissionId || 'pending',
+          status: 'submitted',
           customer: customerInfo,
           summary: {
-            totalAmount: invoiceData.totalAmount,
+            totalAmount: invoiceData.totalAmount || 0,
             taxAmount: invoiceData.taxAmount || 0,
-            grandTotal: invoiceData.totalAmount + (invoiceData.taxAmount || 0)
-          }
+            grandTotal: (invoiceData.totalAmount || 0) + (invoiceData.taxAmount || 0)
+          },
+          myInvoisResponse: submissionResult.data
         }
       };
 
-      // Add QR code if available
-      if (submissionResult.data.documents[0].qrCode) {
-        responseData.data.qrCode = submissionResult.data.documents[0].qrCode;
+      // Try to extract more details from MyInvois response safely
+      if (submissionResult.data && submissionResult.data.documents && submissionResult.data.documents[0]) {
+        const doc = submissionResult.data.documents[0];
+        responseData.data.einvoiceId = doc.internalId || invoiceData.invoiceNumber;
+        responseData.data.submissionId = doc.uuid || submissionResult.submissionId;
+        responseData.data.status = doc.status || 'submitted';
+        
+        if (doc.qrCode) {
+          responseData.data.qrCode = doc.qrCode;
+        }
       }
 
       res.json(responseData);
@@ -180,9 +183,9 @@ router.get('/status/:invoiceId', async (req, res) => {
         success: true,
         data: {
           invoiceId,
-          status: statusResult.data.status,
+          status: statusResult.data?.status || 'unknown',
           lastUpdated: new Date().toISOString(),
-          lhdnReference: statusResult.data.uuid,
+          lhdnReference: statusResult.data?.uuid || 'unknown',
           details: statusResult.data
         }
       });
@@ -306,8 +309,15 @@ router.post('/demo/generate', async (req, res) => {
   try {
     const { invoiceData, customerInfo, items } = req.body;
 
+    console.log('🎮 Using demo mode for e-Invoice generation');
+
     // Simulate processing delay
     await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Calculate totals
+    const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+    const taxAmount = subtotal * 0.06;
+    const grandTotal = subtotal + taxAmount;
 
     // Return mock success response
     res.json({
@@ -317,14 +327,15 @@ router.post('/demo/generate', async (req, res) => {
         einvoiceId: 'DEMO-' + Date.now(),
         invoiceNumber: invoiceData.invoiceNumber,
         timestamp: new Date().toISOString(),
-        submissionId: 'demo-uuid-12345',
+        submissionId: 'demo-uuid-' + Math.random().toString(36).substr(2, 9),
         status: 'submitted',
         customer: customerInfo,
         summary: {
-          totalAmount: invoiceData.totalAmount,
-          taxAmount: invoiceData.taxAmount || 0,
-          grandTotal: invoiceData.totalAmount + (invoiceData.taxAmount || 0)
+          totalAmount: subtotal,
+          taxAmount: taxAmount,
+          grandTotal: grandTotal
         },
+        qrCode: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiNmZmYiLz48dGV4dCB4PSI1MCIgeT0iNTAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzAwMCI+REVNTyBRUiBDT0RFPC90ZXh0Pjwvc3ZnPg==',
         note: 'This is a demo response. Real MyInvois integration requires valid LHDN credentials.'
       }
     });
