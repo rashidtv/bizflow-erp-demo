@@ -5,7 +5,6 @@ import SSTTemplates from '../components/compliance/SSTTemplates.vue'
 import PayrollCalculator from '../components/hr/PayrollCalculator.vue'
 import ProductManagement from '../components/inventory/ProductManagement.vue'
 import EInvoiceManager from '../components/einvoicing/EInvoiceManager.vue'
-import EInvoiceTest from '../components/einvoicing/EInvoiceTest.vue'
 
 const routes = [
   {
@@ -37,11 +36,6 @@ const routes = [
     path: '/einvoicing',
     name: 'EInvoicing',
     component: EInvoiceManager
-  },
-  {
-    path: '/einvoicing-test',
-    name: 'EInvoicingTest',
-    component: EInvoiceTest
   },
   // Catch all route - redirect to dashboard
   {

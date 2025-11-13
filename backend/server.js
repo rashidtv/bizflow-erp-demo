@@ -1,4 +1,4 @@
-// server.js - Complete Fixed Version for Render Deployment
+// server.js - Complete Fixed Version with E-Invoicing
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -123,24 +123,6 @@ app.get('/api/health3', (req, res) => {
     endpoint: 'health3', 
     timestamp: Date.now(),
     service: 'HetrixTools Monitor'
-  });
-});
-
-// Keep-alive endpoints
-app.get('/api/keepalive', (req, res) => {
-  res.status(200).json({ 
-    status: 'alive', 
-    timestamp: Date.now(),
-    message: 'Keep-alive check passed'
-  });
-});
-
-// Quick warmup endpoint
-app.get('/api/warmup', (req, res) => {
-  res.status(200).json({ 
-    status: 'warmed', 
-    timestamp: Date.now(),
-    message: 'Backend warmed up successfully'
   });
 });
 

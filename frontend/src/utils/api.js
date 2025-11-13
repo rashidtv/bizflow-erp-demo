@@ -29,11 +29,32 @@ api.interceptors.request.use(
   }
 );
 
+// Response interceptor
+api.interceptors.response.use(
+  (response) => {
+    console.log(`Response received from: ${response.config.url}`, response.status);
+    return response;
+  },
+  (error) => {
+    console.error('Response error:', error.response?.status, error.response?.data);
+    if (error.response?.status === 401) {
+      localStorage.removeItem('auth_token');
+      window.location.href = '/';
+    }
+    return Promise.reject(error);
+  }
+);
+
 // E-Invoicing API methods
 export const eInvoicingAPI = {
   // Generate and submit e-Invoice
   generateEInvoice: (invoiceData) => {
     return api.post('/einvoicing/generate', invoiceData);
+  },
+
+  // Demo submission (for testing without credentials)
+  generateDemoEInvoice: (invoiceData) => {
+    return api.post('/einvoicing/demo/generate', invoiceData);
   },
 
   // Get e-Invoice status
@@ -54,30 +75,21 @@ export const eInvoicingAPI = {
   // Check MyInvois API health
   checkHealth: () => {
     return api.get('/einvoicing/health');
+  },
+
+  // Debug authentication test
+  testAuth: () => {
+    return api.get('/einvoicing/debug/auth');
   }
 };
 
 // Export individual methods as well
 export const generateEInvoice = eInvoicingAPI.generateEInvoice;
+export const generateDemoEInvoice = eInvoicingAPI.generateDemoEInvoice;
 export const getEInvoiceStatus = eInvoicingAPI.getEInvoiceStatus;
 export const cancelEInvoice = eInvoicingAPI.cancelEInvoice;
 export const validateEInvoice = eInvoicingAPI.validateEInvoice;
 export const checkEInvoiceHealth = eInvoicingAPI.checkHealth;
-
-// Response interceptor
-api.interceptors.response.use(
-  (response) => {
-    console.log(`Response received from: ${response.config.url}`, response.status);
-    return response;
-  },
-  (error) => {
-    console.error('Response error:', error.response?.status, error.response?.data);
-    if (error.response?.status === 401) {
-      localStorage.removeItem('auth_token');
-      window.location.href = '/';
-    }
-    return Promise.reject(error);
-  }
-);
+export const testEInvoiceAuth = eInvoicingAPI.testAuth;
 
 export default api;
