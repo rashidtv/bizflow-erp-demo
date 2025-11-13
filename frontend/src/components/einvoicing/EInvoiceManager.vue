@@ -74,14 +74,14 @@
               </div>
               <div class="form-group">
                 <label>Total Amount (MYR) *</label>
-                <input v-model="newInvoice.totalAmount" type="number" step="0.01" 
+                <input v-model.number="newInvoice.totalAmount" type="number" step="0.01" 
                        placeholder="0.00" class="form-input" @input="calculateTax">
                 <span v-if="!newInvoice.totalAmount" class="error-text">Required</span>
               </div>
               <div class="form-group">
                 <label>Tax Amount (MYR)</label>
-                <input v-model="newInvoice.taxAmount" type="number" step="0.01" 
-                       placeholder="0.00" class="form-input" readonly>
+                <input :value="formatCurrency(newInvoice.taxAmount)" type="text" 
+                       class="form-input" readonly>
               </div>
             </div>
           </div>
@@ -137,21 +137,21 @@
                 </div>
                 <div class="form-group">
                   <label>Quantity *</label>
-                  <input v-model="item.quantity" type="number" step="1" 
+                  <input v-model.number="item.quantity" type="number" step="1" 
                          placeholder="1" class="form-input" @input="calculateTotals"
                          :class="{ 'error': !item.quantity || item.quantity <= 0 }">
                   <span v-if="!item.quantity || item.quantity <= 0" class="error-text">Required</span>
                 </div>
                 <div class="form-group">
                   <label>Unit Price (MYR) *</label>
-                  <input v-model="item.unitPrice" type="number" step="0.01" 
+                  <input v-model.number="item.unitPrice" type="number" step="0.01" 
                          placeholder="0.00" class="form-input" @input="calculateTotals"
                          :class="{ 'error': !item.unitPrice || item.unitPrice < 0 }">
                   <span v-if="!item.unitPrice || item.unitPrice < 0" class="error-text">Required</span>
                 </div>
                 <div class="form-group">
                   <label>Total</label>
-                  <input :value="(item.quantity * item.unitPrice).toFixed(2)" 
+                  <input :value="formatCurrency(item.quantity * item.unitPrice)" 
                          type="text" class="form-input" readonly>
                 </div>
                 <button @click="removeItem(index)" class="btn-remove" 
@@ -165,15 +165,15 @@
             <div class="summary-section">
               <div class="summary-row">
                 <span>Subtotal:</span>
-                <span>MYR {{ calculateSubtotal().toFixed(2) }}</span>
+                <span>MYR {{ formatCurrency(calculateSubtotal()) }}</span>
               </div>
               <div class="summary-row">
                 <span>Tax (6%):</span>
-                <span>MYR {{ newInvoice.taxAmount.toFixed(2) }}</span>
+                <span>MYR {{ formatCurrency(newInvoice.taxAmount) }}</span>
               </div>
               <div class="summary-row total">
                 <span>Grand Total:</span>
-                <span>MYR {{ (calculateSubtotal() + parseFloat(newInvoice.taxAmount || 0)).toFixed(2) }}</span>
+                <span>MYR {{ formatCurrency(calculateSubtotal() + parseFloat(newInvoice.taxAmount || 0)) }}</span>
               </div>
             </div>
           </div>
@@ -204,7 +204,7 @@
             </div>
             <div class="submission-details">
               <p><strong>Customer:</strong> {{ submission.customer.name }}</p>
-              <p><strong>Amount:</strong> MYR {{ submission.summary.totalAmount.toFixed(2) }}</p>
+              <p><strong>Amount:</strong> MYR {{ formatCurrency(submission.summary.totalAmount) }}</p>
               <p><strong>Submitted:</strong> {{ formatDate(submission.timestamp) }}</p>
             </div>
           </div>
@@ -266,7 +266,7 @@ export default {
         invoiceNumber: `INV-${new Date().getFullYear()}-${timestamp.toString().slice(-4)}`,
         invoiceDate: new Date().toISOString().split('T')[0],
         totalAmount: 0,
-        taxAmount: 0,
+        taxAmount: 0, // Keep as number, not string
         customer: {
           name: '',
           taxId: '',
@@ -286,6 +286,12 @@ export default {
           }
         ]
       }
+    },
+
+    formatCurrency(value) {
+      // Safely format currency values to avoid toFixed errors
+      const num = parseFloat(value) || 0
+      return num.toFixed(2)
     },
 
     async checkApiStatus() {
@@ -331,7 +337,9 @@ export default {
     },
 
     calculateTax() {
-      this.newInvoice.taxAmount = (this.newInvoice.totalAmount * 0.06).toFixed(2)
+      // Ensure taxAmount is always a number, not a string
+      const tax = (this.newInvoice.totalAmount * 0.06)
+      this.newInvoice.taxAmount = parseFloat(tax.toFixed(2))
     },
 
     async validateAndSubmit() {
@@ -391,9 +399,9 @@ export default {
 Invoice Number: ${submission.invoiceNumber}
 Customer: ${submission.customer.name}
 Status: ${submission.status}
-Total Amount: MYR ${submission.summary.totalAmount.toFixed(2)}
-Tax Amount: MYR ${submission.summary.taxAmount.toFixed(2)}
-Grand Total: MYR ${submission.summary.grandTotal.toFixed(2)}
+Total Amount: MYR ${this.formatCurrency(submission.summary.totalAmount)}
+Tax Amount: MYR ${this.formatCurrency(submission.summary.taxAmount)}
+Grand Total: MYR ${this.formatCurrency(submission.summary.grandTotal)}
 Submitted: ${this.formatDate(submission.timestamp)}
 ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
       `.trim()
