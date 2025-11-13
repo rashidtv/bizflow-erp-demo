@@ -72,6 +72,8 @@
                 <label>Invoice Date *</label>
                 <input v-model="newInvoice.invoiceDate" type="date" class="form-input">
               </div>
+            </div>
+            <div class="form-grid">
               <div class="form-group">
                 <label>Total Amount (MYR) *</label>
                 <input v-model.number="newInvoice.totalAmount" type="number" step="0.01" 
@@ -102,6 +104,8 @@
                 <input v-model="newInvoice.customer.taxId" type="text" 
                        placeholder="123456789012" class="form-input">
               </div>
+            </div>
+            <div class="form-grid">
               <div class="form-group">
                 <label>Email</label>
                 <input v-model="newInvoice.customer.email" type="email" 
@@ -116,7 +120,7 @@
             <div class="form-group full-width">
               <label>Address</label>
               <textarea v-model="newInvoice.customer.address" 
-                        placeholder="Customer address" class="form-textarea"></textarea>
+                        placeholder="Customer address" class="form-textarea" rows="3"></textarea>
             </div>
           </div>
 
@@ -126,9 +130,17 @@
               <h3>Invoice Items</h3>
               <button @click="addItem" class="btn-add">+ Add Item</button>
             </div>
+            
             <div v-for="(item, index) in newInvoice.items" :key="index" class="item-row">
+              <div class="item-header">
+                <h4>Item {{ index + 1 }}</h4>
+                <button @click="removeItem(index)" class="btn-remove" 
+                        :disabled="newInvoice.items.length === 1" title="Remove item">
+                  🗑️ Remove
+                </button>
+              </div>
               <div class="item-grid">
-                <div class="form-group">
+                <div class="form-group full-width">
                   <label>Description *</label>
                   <input v-model="item.description" type="text" 
                          placeholder="Item description" class="form-input"
@@ -150,14 +162,10 @@
                   <span v-if="!item.unitPrice || item.unitPrice < 0" class="error-text">Required</span>
                 </div>
                 <div class="form-group">
-                  <label>Total</label>
+                  <label>Total (MYR)</label>
                   <input :value="formatCurrency(item.quantity * item.unitPrice)" 
                          type="text" class="form-input" readonly>
                 </div>
-                <button @click="removeItem(index)" class="btn-remove" 
-                        :disabled="newInvoice.items.length === 1" title="Remove item">
-                  🗑️
-                </button>
               </div>
             </div>
             
@@ -444,32 +452,37 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
 
 <style scoped>
 .e-invoice-manager {
-  padding: 2rem;
+  padding: 1rem;
   max-width: 1200px;
   margin: 0 auto;
   min-height: 80vh;
+  box-sizing: border-box;
 }
 
 .page-header {
   text-align: center;
   margin-bottom: 2rem;
+  padding: 0 1rem;
 }
 
 .page-header h1 {
   color: #2c3e50;
   margin-bottom: 0.5rem;
-  font-size: 2.5rem;
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
   font-weight: 700;
+  line-height: 1.2;
 }
 
 .subtitle {
   color: #6c757d;
-  font-size: 1.1rem;
+  font-size: clamp(0.9rem, 2vw, 1.1rem);
   margin: 0;
+  line-height: 1.4;
 }
 
 .status-overview {
   margin-bottom: 2rem;
+  padding: 0 1rem;
 }
 
 .status-card {
@@ -482,6 +495,8 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
   gap: 1rem;
   border-left: 4px solid #6c757d;
   transition: all 0.3s ease;
+  flex-wrap: wrap;
+  max-width: 100%;
 }
 
 .status-card.connected {
@@ -501,6 +516,7 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
 
 .status-info {
   flex: 1;
+  min-width: 200px;
 }
 
 .status-info h3 {
@@ -521,6 +537,7 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   font-size: 0.8rem;
+  display: inline-block;
 }
 
 .btn-refresh {
@@ -532,6 +549,7 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
   cursor: pointer;
   font-size: 0.9rem;
   transition: background 0.3s ease;
+  white-space: nowrap;
 }
 
 .btn-refresh:hover {
@@ -545,24 +563,26 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
 
 .quick-actions {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
   gap: 1.5rem;
   margin-bottom: 3rem;
+  padding: 0 1rem;
 }
 
 .action-card {
   background: white;
-  padding: 2rem;
+  padding: 1.5rem;
   border-radius: 12px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
   cursor: pointer;
   transition: all 0.3s ease;
   border: 1px solid #e9ecef;
   position: relative;
   overflow: hidden;
+  max-width: 100%;
 }
 
 .action-card::before {
@@ -581,25 +601,29 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
 }
 
 .action-icon {
-  font-size: 3rem;
+  font-size: 2.5rem;
   flex-shrink: 0;
 }
 
 .action-content {
   flex: 1;
+  min-width: 0;
 }
 
 .action-content h3 {
   margin: 0 0 0.5rem 0;
   color: #2c3e50;
-  font-size: 1.3rem;
+  font-size: 1.2rem;
+  line-height: 1.3;
+  word-wrap: break-word;
 }
 
 .action-content p {
   margin: 0;
   color: #6c757d;
-  font-size: 0.95rem;
-  line-height: 1.5;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  word-wrap: break-word;
 }
 
 .action-arrow {
@@ -607,6 +631,7 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
   font-size: 1.5rem;
   font-weight: bold;
   transition: transform 0.3s ease;
+  flex-shrink: 0;
 }
 
 .action-card:hover .action-arrow {
@@ -627,14 +652,15 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
   z-index: 1000;
   padding: 1rem;
   backdrop-filter: blur(5px);
+  overflow-y: auto;
 }
 
 .modal-content {
   background: white;
   border-radius: 16px;
   width: 100%;
-  max-width: 900px;
-  max-height: 90vh;
+  max-width: min(900px, 95vw);
+  max-height: min(90vh, 800px);
   overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0,0,0,0.3);
   animation: modalSlideIn 0.3s ease-out;
@@ -655,16 +681,20 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem 2rem;
+  padding: 1.5rem;
   border-bottom: 1px solid #e9ecef;
   background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
   border-radius: 16px 16px 0 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .modal-header h2 {
   margin: 0;
   color: #2c3e50;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
+  line-height: 1.3;
 }
 
 .btn-close {
@@ -676,6 +706,7 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
   padding: 0.5rem;
   border-radius: 50%;
   transition: all 0.3s ease;
+  flex-shrink: 0;
 }
 
 .btn-close:hover {
@@ -684,12 +715,12 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
 }
 
 .modal-body {
-  padding: 2rem;
+  padding: 1.5rem;
 }
 
 .form-section {
-  margin-bottom: 2.5rem;
-  padding-bottom: 2rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
   border-bottom: 1px solid #e9ecef;
 }
 
@@ -703,7 +734,8 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
   color: #2c3e50;
   border-bottom: 2px solid #007bff;
   padding-bottom: 0.5rem;
-  font-size: 1.3rem;
+  font-size: 1.2rem;
+  line-height: 1.3;
 }
 
 .section-header {
@@ -711,17 +743,27 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.section-header h3 {
+  margin: 0;
+  border: none;
+  padding: 0;
 }
 
 .btn-add {
   background: #28a745;
   color: white;
   border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
   transition: background 0.3s ease;
+  font-size: 0.9rem;
+  white-space: nowrap;
 }
 
 .btn-add:hover {
@@ -730,16 +772,30 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+  gap: 1rem;
   margin-bottom: 1rem;
+}
+
+.item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.item-header h4 {
+  margin: 0;
+  color: #495057;
+  font-size: 1rem;
 }
 
 .item-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr auto;
+  grid-template-columns: 1fr;
   gap: 1rem;
-  align-items: end;
 }
 
 .full-width {
@@ -760,12 +816,14 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
 }
 
 .form-input, .form-textarea {
-  padding: 0.75rem 1rem;
+  padding: 0.75rem;
   border: 2px solid #e9ecef;
   border-radius: 8px;
   font-size: 0.95rem;
   transition: all 0.3s ease;
   background: white;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .form-input:focus, .form-textarea:focus {
@@ -795,17 +853,17 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
   background: #dc3545;
   color: white;
   border: none;
-  padding: 0.75rem;
-  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
   cursor: pointer;
-  height: fit-content;
   transition: all 0.3s ease;
-  font-size: 1rem;
+  font-size: 0.9rem;
+  white-space: nowrap;
 }
 
-.btn-remove:hover {
+.btn-remove:hover:not(:disabled) {
   background: #c82333;
-  transform: scale(1.05);
+  transform: translateY(-1px);
 }
 
 .btn-remove:disabled {
@@ -851,10 +909,13 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
-  padding: 1.5rem 2rem;
+  padding: 1.5rem;
   border-top: 1px solid #e9ecef;
   background: #f8f9fa;
   border-radius: 0 0 16px 16px;
+  position: sticky;
+  bottom: 0;
+  flex-wrap: wrap;
 }
 
 .btn-cancel {
@@ -866,6 +927,7 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
   cursor: pointer;
   font-weight: 500;
   transition: background 0.3s ease;
+  min-width: 100px;
 }
 
 .btn-cancel:hover {
@@ -876,7 +938,7 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
   background: linear-gradient(135deg, #2c5aa0 0%, #1e3a8a 100%);
   color: white;
   border: none;
-  padding: 0.75rem 2rem;
+  padding: 0.75rem 1.5rem;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
@@ -899,6 +961,7 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
 /* Recent Submissions */
 .recent-submissions {
   margin-top: 3rem;
+  padding: 0 1rem;
 }
 
 .recent-submissions .section-header {
@@ -908,7 +971,7 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
 .recent-submissions h3 {
   color: #2c3e50;
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
 }
 
 .submissions-list {
@@ -926,6 +989,8 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
   align-items: center;
   transition: all 0.3s ease;
   border: 1px solid #e9ecef;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .submission-item:hover {
@@ -935,6 +1000,7 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
 
 .submission-info {
   flex: 1;
+  min-width: 250px;
 }
 
 .submission-header {
@@ -942,6 +1008,8 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .invoice-number {
@@ -951,11 +1019,12 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
 }
 
 .status-badge {
-  padding: 0.5rem 1rem;
+  padding: 0.4rem 0.8rem;
   border-radius: 20px;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .status-badge.submitted {
@@ -983,23 +1052,26 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
   margin: 0;
   font-size: 0.9rem;
   color: #6c757d;
+  line-height: 1.4;
 }
 
 .submission-actions {
   display: flex;
   gap: 0.75rem;
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .btn-secondary {
   background: #6c757d;
   color: white;
   border: none;
-  padding: 0.6rem 1.2rem;
+  padding: 0.5rem 1rem;
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.85rem;
   transition: background 0.3s ease;
+  white-space: nowrap;
 }
 
 .btn-secondary:hover {
@@ -1010,11 +1082,12 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
   background: white;
   color: #007bff;
   border: 2px solid #007bff;
-  padding: 0.6rem 1.2rem;
+  padding: 0.5rem 1rem;
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.85rem;
   transition: all 0.3s ease;
+  white-space: nowrap;
 }
 
 .btn-outline:hover {
@@ -1025,15 +1098,16 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
 /* Empty State */
 .empty-state {
   text-align: center;
-  padding: 4rem 2rem;
+  padding: 3rem 1rem;
   background: white;
   border-radius: 12px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  margin-top: 2rem;
+  margin: 2rem 1rem 0;
+  max-width: 100%;
 }
 
 .empty-icon {
-  font-size: 4rem;
+  font-size: 3rem;
   margin-bottom: 1.5rem;
   opacity: 0.7;
 }
@@ -1041,13 +1115,13 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
 .empty-state h3 {
   color: #2c3e50;
   margin-bottom: 1rem;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
 }
 
 .empty-state p {
   color: #6c757d;
   margin-bottom: 2rem;
-  font-size: 1.1rem;
+  font-size: 1rem;
   max-width: 400px;
   margin-left: auto;
   margin-right: auto;
@@ -1057,45 +1131,46 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
 /* Responsive Design */
 @media (max-width: 768px) {
   .e-invoice-manager {
+    padding: 0.5rem;
+  }
+
+  .status-card {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
     padding: 1rem;
   }
 
-  .page-header h1 {
-    font-size: 2rem;
-  }
-
-  .quick-actions {
-    grid-template-columns: 1fr;
-  }
-
   .action-card {
-    padding: 1.5rem;
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+    padding: 1.5rem 1rem;
   }
 
   .action-icon {
-    font-size: 2.5rem;
-  }
-
-  .item-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
+    margin-bottom: 0.5rem;
   }
 
   .modal-content {
-    margin: 0.5rem;
+    margin: 0;
+    max-height: 95vh;
   }
 
   .modal-body {
-    padding: 1.5rem;
+    padding: 1rem;
   }
 
   .form-grid {
     grid-template-columns: 1fr;
   }
 
+  .item-grid {
+    grid-template-columns: 1fr;
+  }
+
   .submission-item {
     flex-direction: column;
-    gap: 1.5rem;
     text-align: center;
   }
 
@@ -1110,32 +1185,64 @@ ${submission.submissionId ? `Submission ID: ${submission.submissionId}` : ''}
 
   .btn-primary, .btn-cancel {
     width: 100%;
+    min-width: auto;
+  }
+
+  .empty-state {
+    margin: 1rem 0.5rem 0;
+    padding: 2rem 1rem;
   }
 }
 
 @media (max-width: 480px) {
   .page-header h1 {
-    font-size: 1.75rem;
+    font-size: 1.6rem;
   }
 
-  .status-card {
+  .quick-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .section-header {
     flex-direction: column;
-    text-align: center;
+    align-items: stretch;
     gap: 1rem;
   }
 
-  .action-card {
-    flex-direction: column;
+  .section-header h3 {
     text-align: center;
-    gap: 1rem;
   }
 
-  .action-icon {
-    margin-bottom: 0.5rem;
+  .btn-add {
+    width: 100%;
   }
 
-  .empty-state {
-    padding: 3rem 1rem;
+  .item-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-remove {
+    width: 100%;
+  }
+
+  .submission-header {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .submission-details {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) {
+  .action-card:hover,
+  .submission-item:hover,
+  .btn-primary:hover:not(:disabled),
+  .btn-remove:hover:not(:disabled) {
+    transform: none;
   }
 }
 </style>
